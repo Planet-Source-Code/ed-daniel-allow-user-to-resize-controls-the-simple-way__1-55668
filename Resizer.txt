@@ -1,0 +1,95 @@
+'Public Declares
+Public Declare Function ReleaseCapture Lib "user32" () As Long
+Public Declare Function SendMessage Lib "user32" Alias "SendMessageA" (ByVal hwnd As Long, ByVal wMsg As Long, ByVal wParam As Long, lParam As Any) As Long
+Public Const WM_NCLBUTTONDOWN = &HA1
+Public Const HTLEFT = 10
+Public Const HTRIGHT = 11
+Public Const HTTOP = 12
+Public Const HTTOPLEFT = 13
+Public Const HTTOPRIGHT = 14
+Public Const HTBOTTOM = 15
+Public Const HTBOTTOMLEFT = 16
+Public Const HTBOTTOMRIGHT = 17
+Public Const HTBORDER = 18
+'***********USE THESE SUBS IN THE MOUSEDOWN AND MOUSEMOVE EVENTS
+Public Sub ctlSizeMouseMove(xCTL As Control, X As Single, Y As Single)
+    Dim NewPointer As MousePointerConstants
+    'Where is the mouse
+    'in a corner
+    If (X < 125 And Y < 125) Then
+        'NW Corner
+        NewPointer = vbSizeNWSE
+    ElseIf ((X > xCTL.Width - 125) And Y < 125) Then
+        'NE Corner
+        NewPointer = vbSizeNESW
+    ElseIf ((X > xCTL.Width - 125) And Y > xCTL.Height - 125) Then
+        'SE Corner
+        NewPointer = vbSizeNWSE
+    ElseIf (X < 125 And (Y > xCTL.Height - 125)) Then
+        'SW Corner
+        NewPointer = vbSizeNESW
+    ElseIf ((X > 0 And X < 125) And (Y > 125 And Y < xCTL.Height - 125)) Then
+        'Left Side
+        NewPointer = vbSizeWE
+    ElseIf ((X > xCTL.Width - 125 And X < xCTL.Width) And (Y > 125 And Y < xCTL.Height - 125)) Then
+        'Right Side
+        NewPointer = vbSizeWE
+    ElseIf ((X < xCTL.Width - 125 And X > 125) And (Y < 125 Or Y > xCTL.Height - 125)) Then
+        'Right Side
+        NewPointer = vbSizeNS
+    Else
+        NewPointer = vbDefault
+    End If
+    If NewPointer <> xCTL.MousePointer Then
+        xCTL.MousePointer = NewPointer
+    End If
+End Sub
+Public Sub ctlSizeMouseDown(xCTL As Control, X As Single, Y As Single)
+    Dim nParam As Long
+    With xCTL
+        Select Case .MousePointer
+            Case vbSizeNWSE
+                If X <= 125 Then
+                    nParam = HTTOPLEFT
+                Else
+                    nParam = HTBOTTOMRIGHT
+                End If
+            Case vbSizeNESW
+                If X <= 125 Then
+                    nParam = HTBOTTOMLEFT
+                Else
+                    nParam = HTTOPRIGHT
+                End If
+            Case vbSizeNS
+                If Y <= 125 Then
+                    nParam = HTTOP
+                Else
+                    nParam = HTBOTTOM
+                End If
+            Case vbSizeWE
+                If X <= 125 Then
+                    nParam = HTLEFT
+                Else
+                    nParam = HTRIGHT
+                End If
+            Case Else
+                nParam = 0
+        End Select
+        If nParam Then
+            Call ReleaseCapture
+            Call SendMessage(.hwnd, WM_NCLBUTTONDOWN, nParam, 0)
+        End If
+    End With
+End Sub
+
+'******************EXAMPLE FOR PICTURE1 MouseDown And MouseMove Events
+
+Private Sub Picture1_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
+ctlSizeMouseDown Picture1, X, Y
+
+End Sub
+
+Private Sub Picture1_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
+ctlSizeMouseMove Picture1, X, Y
+End Sub
+
